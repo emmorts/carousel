@@ -1,0 +1,87 @@
+.carousel {
+  position: relative;
+  box-sizing: border-box;
+  font-size: 0;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 80px 0;
+  overflow: hidden;
+  text-align: center;
+}
+
+.carousel-content {
+  position: relative;
+  transition: left 0.4s ease-in-out;
+}
+
+.carousel-arrow {
+  display: block;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-size: 28px 46px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.carousel-arrow.left {
+  left: 10px;
+  border-right: 20px solid rgb(63, 169, 69);
+  border-top: 20px solid transparent;
+  border-bottom: 20px solid transparent;
+}
+
+.carousel-arrow.right {
+  right: 10px;
+  border-left: 20px solid rgb(63, 169, 69);
+  border-top: 20px solid transparent;
+  border-bottom: 20px solid transparent;
+}
+
+.carousel-image {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
+  margin: 0 auto;
+  text-align: center;
+  width: 400px;
+}
+
+.carousel-image img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.carousel-tracker {
+  margin: 30px auto 0 auto;
+  text-align: center;
+}
+
+.carousel-tracker-item {
+  display: inline-block;
+  border-radius: 20px;
+  width: 15px;
+  height: 15px;
+  background-color: rgb(236, 239, 237);
+  margin: 0 7px;
+  cursor: pointer;
+}
+
+.carousel-tracker-item.active {
+  background-color: rgb(63, 169, 69);
+}
+
+.loaddex-screenshots-container {
+  position: relative;
+  width: 500%;
+  overflow: hidden;
+}
+
+.loaddex-screenshots-container .custom-clearfix {
+  display: none;
+}
+
+.loaddex-screenshots-container .custom-clearfix[data-hide=false] {
+  display: block;
+}

@@ -1,0 +1,15 @@
+{
+  "name": "carousel",
+  "version": "1.0.0",
+  "description": "Carousel assignment (Spectr)",
+  "author": "Tomas Stropus",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "parcel index.html"
+  },
+  "devDependencies": {
+    "webpack": "^4.4.1",
+    "webpack-cli": "^2.0.13"
+  }
+}
