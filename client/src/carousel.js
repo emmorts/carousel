@@ -1,4 +1,5 @@
-import ApiProvider from "./providers/api-provider";
+import './carousel.css';
+import ApiProvider from './providers/api-provider.js';
 
 export default class Carousel {
   constructor(elementSelector, options = {}) {
@@ -14,21 +15,18 @@ export default class Carousel {
 
     this.currentPosition = 0;
     this.currentSlide = 0;
-    this.slideWidth = 0;
     this.slideCount = 0;
+    this.slideWidth = 400;
 
     this._initializeCarousel();
 
+    this._showLoader();
+
     new ApiProvider()
       .load(10)
-      .then(imageUrls => this._loadImages(imageUrls))
-      .then(() => {
-        if (!this.slideWidth) {
-          this.slideWidth = this.contentContainerElement.firstChild.clientWidth;
-        }
-
-        this.contentContainerElement.style.width = this.slideCount * this.slideWidth + 'px';
-      })
+      .then(images => this._renderImages(images))
+      .then(() => this._updateContainer())
+      .then(() => this._hideLoader())
       .catch(ex => {
         if (ex instanceof Error) {
           throw ex;
@@ -37,27 +35,23 @@ export default class Carousel {
       });
   }
 
-  _loadImages(imageUrls) {
+  _renderImages(images) {
     return new Promise((resolve, reject) => {
-      this.slideCount = 0;
-      return imageUrls
-        .reduce((promise, imageUrl) => {
-          return promise
-            .then(() => this._addImageToCarousel(imageUrl))
+      return images
+        .reduce((promise, image) => promise
+            .then(() => this._addImageToCarousel(image))
             .then(() => this.slideCount++)
-            .catch(() => {
-              console.error(`Image '${imageUrl}' failed to load!`);
-            });
-        }, Promise.resolve())
+            .catch(() => console.error(`Image '${image.url}' failed to load!`))
+          , Promise.resolve())
         .then(() => resolve());
     });
   }
 
-  _addImageToCarousel(imageUrl) {
+  _addImageToCarousel(image) {
     return new Promise((resolve, reject) => {
-      const imageContainerElement = this._createImage(imageUrl);
+      const imageContainerElement = this._createImage(image);
 
-      imageContainerElement.firstChild.addEventListener('load', () => resolve());
+      imageContainerElement.firstChild.addEventListener('loadeddata', () => resolve());
 
       imageContainerElement.firstChild.addEventListener('error', () => {
         this.contentContainerElement.removeChild(imageContainerElement);
@@ -69,10 +63,29 @@ export default class Carousel {
     });
   }
 
+  _showLoader() {
+    if (this.loaderContainerElement) {
+      this.loaderContainerElement.style.display = 'block';
+    }
+    if (this.arrowContainerElement) {
+      this.arrowContainerElement.style.display = 'none';
+    }
+  }
+
+  _hideLoader() {
+    if (this.loaderContainerElement) {
+      this.loaderContainerElement.style.display = 'none';
+    }
+    if (this.arrowContainerElement) {
+      this.arrowContainerElement.style.display = 'block';
+    }
+  }
+
   _initializeCarousel() {
     const carouselWrapperElement = this._createCarouselWrapper();
 
     carouselWrapperElement.appendChild(this._createArrowContainer());
+    carouselWrapperElement.appendChild(this._createLoaderContainer());
     carouselWrapperElement.appendChild(this._createContentContainer());
     carouselWrapperElement.appendChild(this._createTrackerContainer());
 
@@ -88,22 +101,41 @@ export default class Carousel {
   }
 
   _createArrowContainer() {
-    const arrowContainerElement = document.createElement('div');
-    arrowContainerElement.className = 'carousel-arrows';
+    this.arrowContainerElement = document.createElement('div');
+    this.arrowContainerElement.className = 'carousel-arrows';
+
+    const arrowLeftContainerElement = document.createElement('div');
+    arrowLeftContainerElement.className = 'carousel-arrow left';
+    this.arrowContainerElement.appendChild(arrowLeftContainerElement);
 
     const arrowLeftElement = document.createElement('a');
-    arrowLeftElement.className = 'carousel-arrow left';
+    arrowLeftElement.className = 'fas fa-angle-left';
     arrowLeftElement.setAttribute('title', 'Previous');
     arrowLeftElement.addEventListener('click', this._onPreviousClick.bind(this));
-    arrowContainerElement.appendChild(arrowLeftElement);
+    arrowLeftContainerElement.appendChild(arrowLeftElement);
+
+    const arrowRightContainerElement = document.createElement('div');
+    arrowRightContainerElement.className = 'carousel-arrow right';
+    this.arrowContainerElement.appendChild(arrowRightContainerElement);
 
     const arrowRightElement = document.createElement('a');
-    arrowRightElement.className = 'carousel-arrow right';
+    arrowRightElement.className = 'fas fa-angle-right';
     arrowRightElement.setAttribute('title', 'Next');
     arrowRightElement.addEventListener('click', this._onNextClick.bind(this));
-    arrowContainerElement.appendChild(arrowRightElement);
+    arrowRightContainerElement.appendChild(arrowRightElement);
 
-    return arrowContainerElement;
+    return this.arrowContainerElement;
+  }
+
+  _createLoaderContainer() {
+    this.loaderContainerElement = document.createElement('div');
+    this.loaderContainerElement.className = 'carousel-loader'
+
+    const loaderElement = document.createElement('span');
+    loaderElement.className = 'fas fa-spinner rotating';
+    this.loaderContainerElement.appendChild(loaderElement);
+
+    return this.loaderContainerElement;
   }
 
   _createContentContainer() {
@@ -120,12 +152,13 @@ export default class Carousel {
     return trackerContainerElement;
   }
 
-  _createImage(imageUrl) {
+  _createImage(image) {
     const imageContainerElement = document.createElement('div');
     imageContainerElement.className = 'carousel-image';
 
-    const imageElement = document.createElement('img');
-    imageElement.src = imageUrl;
+    const imageElement = document.createElement('video');
+    imageElement.src = image.url;
+    imageElement.width = 400;
 
     imageContainerElement.appendChild(imageElement);
 
@@ -187,9 +220,16 @@ export default class Carousel {
     const direction = this.currentSlide > previousSlide ? 1 : -1;
     const slidesToSkip = Math.abs(previousSlide - this.currentSlide);
 
-    this.currentPostion = -1 * this.currentSlide * this.slideWidth;
+    this.currentPostion = previousSlide * this.slideWidth;
 
-    this.contentContainerElement.style.left = parseInt(this.currentPostion + direction * this.slideWidth * slidesToSkip) + 'px';
+    this.contentContainerElement.style.left = '-' + parseInt(this.currentPostion + direction * this.slideWidth * slidesToSkip) + 'px';
+  }
+
+  _updateContainer() {
+    if (this.contentContainerElement) {
+      this.contentContainerElement.style.width = this.slideCount * this.slideWidth + 'px';
+      this.contentContainerElement.style.display = 'block';
+    }
   }
 
   _trackCurrentSlide(number) {

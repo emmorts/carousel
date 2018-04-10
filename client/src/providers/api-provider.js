@@ -8,17 +8,10 @@ export default class ApiProvider extends Provider {
   }
 
   load(count) {
-    const result = fetch('/api', {
-      mode: 'no-cors'
-    })
-      .then(response => {
-        return response.json();
-      })
-      .catch(error => console.error(error))
-      .then(result => {
-        console.log(result);
-        return result;
-      });
+    const result = fetch(`/api/giphy?limit=${count}&query=random`)
+      .then(response => response.json())
+      .catch(error => console.error(error));
+      
     return result;
   }
 }

@@ -19,7 +19,11 @@ class GiphyService {
       results = giphyResponse.data
         .map(result => result.images.downsized_small)
         .filter(downsizedImage => Number(downsizedImage.mp4_size) <= 100 * 1024)
-        .map(downsizedImage => downsizedImage.mp4);
+        .map(downsizedImage => ({
+          url: downsizedImage.mp4,
+          width: parseInt(downsizedImage.width),
+          height: parseInt(downsizedImage.height)
+        }));
     }
 
     return results;
