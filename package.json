@@ -1,11 +1,13 @@
 {
   "name": "carousel",
   "version": "1.0.0",
-  "description": "Carousel assignment (Spectr)",
+  "description": "Carousel (Spectr)",
   "author": "Tomas Stropus",
   "license": "MIT",
   "scripts": {
-    "build": "parcel index.html"
+    "start": "node server/server.js",
+    "build": "webpack --config client/webpack.prod.js",
+    "serve": "webpack-dev-server --config client/webpack.dev.js"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
@@ -13,11 +15,14 @@
     "babel-polyfill": "^6.26.0",
     "css-loader": "^0.28.11",
     "style-loader": "^0.20.3",
+    "uglifyjs-webpack-plugin": "^1.2.4",
     "webpack": "^4.4.1",
     "webpack-cli": "^2.0.13",
-    "webpack-dev-server": "^3.1.3"
+    "webpack-dev-server": "^3.1.3",
+    "webpack-merge": "^4.1.2"
   },
   "dependencies": {
+    "babel-preset-env": "^1.6.1",
     "giphy-api": "^1.2.7",
     "koa": "^2.5.0",
     "koa-router": "^7.4.0",

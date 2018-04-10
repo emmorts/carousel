@@ -1,6 +1,7 @@
 const Koa = require('koa');
 const Router = require('koa-router');
 const serve = require('koa-static');
+const path = require('path');
 
 const GiphyService = require('./services/giphy-service.js');
 
@@ -18,7 +19,7 @@ router.get('/api/giphy', async (ctx, next) => {
   next();
 });
 
-app.use(serve('../client/dist'));
+app.use(serve(path.join(__dirname, '../', 'client/dist')));
 app.use(router.routes());
 
-app.listen(3000);
+app.listen(3000, () => console.log('Listening on 3000'));

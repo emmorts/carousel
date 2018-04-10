@@ -203,6 +203,8 @@ export default class Carousel {
     const videoElement = document.createElement('video');
     videoElement.src = image.url;
     videoElement.width = 400;
+    videoElement.autoplay = true;
+    videoElement.loop = true;
 
     videoContainerElement.appendChild(videoElement);
 
@@ -253,7 +255,9 @@ export default class Carousel {
   _trackCurrentSlide(number) {
     if (this.trackerElements.length > number) {
       this.trackerElements[this.currentSlide].className = this.trackerElements[this.currentSlide].className.replace('active', '');
+      this.videoElements[this.currentSlide].pause();
       this.trackerElements[number].className = this.trackerElements[number].className + ' active';
+      this.videoElements[number].play();
     }
   }
 
