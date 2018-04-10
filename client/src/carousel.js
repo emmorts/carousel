@@ -1,4 +1,4 @@
-import LocalProvider from "./providers/local-provider";
+import ApiProvider from "./providers/api-provider";
 
 export default class Carousel {
   constructor(elementSelector, options = {}) {
@@ -19,7 +19,7 @@ export default class Carousel {
 
     this._initializeCarousel();
 
-    new LocalProvider()
+    new ApiProvider()
       .load(10)
       .then(imageUrls => this._loadImages(imageUrls))
       .then(() => {
@@ -64,7 +64,7 @@ export default class Carousel {
 
         reject();
       });
-      
+
       this.contentContainerElement.appendChild(imageContainerElement);
     });
   }
