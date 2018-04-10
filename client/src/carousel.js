@@ -13,53 +13,69 @@ export default class Carousel {
       throw new Error(`Failed to find an element with a given selector!`);
     }
 
+    if (!options.provider || !('load' in options.provider)) {
+      throw new Error(`Provider was not supplied or it doesn't have a load() function!`);
+    }
+
     this.currentPosition = 0;
     this.currentSlide = 0;
     this.slideCount = 0;
     this.slideWidth = 400;
+    this.loadCount = options.loadCount || 10;
+    this.provider = options.provider;
 
-    this._initializeCarousel();
+    this.videoElements = [];
+    this.trackerElements = [];
 
+    this._renderCarousel();
+    this._load();
+  }
+
+  _load() {
     this._showLoader();
 
-    new ApiProvider()
-      .load(10)
-      .then(images => this._renderImages(images))
+    return this.provider.load(this.loadCount)
+      .then(videos => this._renderVideos(videos))
       .then(() => this._updateContainer())
       .then(() => this._hideLoader())
       .catch(ex => {
         if (ex instanceof Error) {
           throw ex;
         }
-        throw new Error(`Failed to load all provided images!`);
+        throw new Error(`Failed to load all provided videos!`);
       });
   }
 
-  _renderImages(images) {
+  _renderVideos(videos) {
     return new Promise((resolve, reject) => {
-      return images
-        .reduce((promise, image) => promise
-            .then(() => this._addImageToCarousel(image))
-            .then(() => this.slideCount++)
-            .catch(() => console.error(`Image '${image.url}' failed to load!`))
-          , Promise.resolve())
-        .then(() => resolve());
+      if (videos && videos.length) {
+        return videos
+          .reduce((promise, video) => promise
+              .then(() => this._addVideoToCarousel(video))
+              .then(() => this.slideCount++)
+              .catch(() => console.error(`Video '${video.url}' failed to load!`))
+            , Promise.resolve())
+          .then(() => resolve());
+      } else {
+        resolve();
+      }
     });
   }
 
-  _addImageToCarousel(image) {
+  _addVideoToCarousel(video) {
     return new Promise((resolve, reject) => {
-      const imageContainerElement = this._createImage(image);
+      const videoContainerElement = this._createVideo(video);
 
-      imageContainerElement.firstChild.addEventListener('loadeddata', () => resolve());
+      videoContainerElement.firstChild.addEventListener('loadeddata', () => resolve());
 
-      imageContainerElement.firstChild.addEventListener('error', () => {
-        this.contentContainerElement.removeChild(imageContainerElement);
+      videoContainerElement.firstChild.addEventListener('error', () => {
+        this.contentContainerElement.removeChild(videoContainerElement);
 
         reject();
       });
 
-      this.contentContainerElement.appendChild(imageContainerElement);
+      this.contentContainerElement.appendChild(videoContainerElement);
+      this.trackerContainerElement.appendChild(this._createTracker());
     });
   }
 
@@ -70,6 +86,9 @@ export default class Carousel {
     if (this.arrowContainerElement) {
       this.arrowContainerElement.style.display = 'none';
     }
+    if (this.trackerContainerElement) {
+      this.trackerContainerElement.style.display = 'none';
+    }
   }
 
   _hideLoader() {
@@ -79,9 +98,12 @@ export default class Carousel {
     if (this.arrowContainerElement) {
       this.arrowContainerElement.style.display = 'block';
     }
+    if (this.trackerContainerElement) {
+      this.trackerContainerElement.style.display = 'block';
+    }
   }
 
-  _initializeCarousel() {
+  _renderCarousel() {
     const carouselWrapperElement = this._createCarouselWrapper();
 
     carouselWrapperElement.appendChild(this._createArrowContainer());
@@ -146,28 +168,52 @@ export default class Carousel {
   }
 
   _createTrackerContainer(parent) {
-    const trackerContainerElement = document.createElement('div');
-    trackerContainerElement.className = 'carousel-tracker';
+    this.trackerContainerElement = document.createElement('div');
+    this.trackerContainerElement.className = 'carousel-tracker';
 
-    return trackerContainerElement;
+    return this.trackerContainerElement;
   }
 
-  _createImage(image) {
-    const imageContainerElement = document.createElement('div');
-    imageContainerElement.className = 'carousel-image';
+  _createTracker() {
+    const trackerElement = document.createElement('div');
+    trackerElement.className = 'carousel-tracker-item';
 
-    const imageElement = document.createElement('video');
-    imageElement.src = image.url;
-    imageElement.width = 400;
+    if (!this.trackerElements.length) {
+      trackerElement.className = trackerElement.className + ' active';
+    }
+    
+    trackerElement.addEventListener('click', event => {
+      if (event && event.target) {
+        const index = this.trackerElements.indexOf(event.target);
+        if (index !== -1) {
+          this._slideTo(index);
+        }
+      }
+    });
 
-    imageContainerElement.appendChild(imageElement);
+    this.trackerElements.push(trackerElement);
 
-    return imageContainerElement;
+    return trackerElement;
+  }
+
+  _createVideo(image) {
+    const videoContainerElement = document.createElement('div');
+    videoContainerElement.className = 'carousel-video';
+
+    const videoElement = document.createElement('video');
+    videoElement.src = image.url;
+    videoElement.width = 400;
+
+    videoContainerElement.appendChild(videoElement);
+
+    this.videoElements.push(videoElement);
+
+    return videoContainerElement;
   }
 
   _onPreviousClick(ev) {
     ev.preventDefault();
-    if (this.currentSlide === 0){
+    if (this.currentSlide === 0) {
       this._slideTo(this.slideCount - 1);
     } else {
       this._slideTo(this.currentSlide - 1);
@@ -183,38 +229,10 @@ export default class Carousel {
     }
   }
 
-  _onImageLoad(ev) {
-    if (ev.target && ev.target.parentElement && !this.slideWidth) {
-      this.slideWidth = ev.target.parentElement.clientWidth;
-
-      ev.target.removeEventListener('load', this._onImageLoad);
-    }
-  }
-
-  _animate(options) {
-    const start = Date.now();
-    const intervalId = setInterval(() => {
-      const timePassed = Date.now() - start;
-      let progress = timePassed / options.duration;
-      if (progress > 1) {
-        progress = 1;
-      }
-
-      const delta = options.delta(progress);
-      options.step(delta);
-
-      if (progress === 1) {
-        clearInterval(intervalId);
-        options.callback();
-      }
-    }, options.delay || 17);
-  }
-
   _slideTo(number) {
-    const previousSlide = this.currentSlide;
-
     this._trackCurrentSlide(number);
 
+    const previousSlide = this.currentSlide;
     this.currentSlide = number;
 
     const direction = this.currentSlide > previousSlide ? 1 : -1;
@@ -233,7 +251,10 @@ export default class Carousel {
   }
 
   _trackCurrentSlide(number) {
-    // classes on trackers
+    if (this.trackerElements.length > number) {
+      this.trackerElements[this.currentSlide].className = this.trackerElements[this.currentSlide].className.replace('active', '');
+      this.trackerElements[number].className = this.trackerElements[number].className + ' active';
+    }
   }
 
 }

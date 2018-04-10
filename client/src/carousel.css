@@ -68,7 +68,7 @@
   right: 10px;
 }
 
-.carousel-image {
+.carousel-video {
   position: relative;
   display: inline-block;
   vertical-align: middle;
@@ -76,11 +76,6 @@
   margin: 0 auto;
   text-align: center;
   width: 400px;
-}
-
-.carousel-image img {
-  max-width: 100%;
-  max-height: 100%;
 }
 
 .carousel-tracker {
